@@ -1306,7 +1306,7 @@
       function tick(){
         el.textContent = text.slice(0, i + 1);
         i++;
-        if(i < text.length) setTimeout(tick, 140);
+        if(i < text.length) setTimeout(tick, 350);
       }
       tick();
       typeObserver.unobserve(el);
