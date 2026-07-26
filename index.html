@@ -1179,6 +1179,43 @@
 
   renderReviews();
 
+  // ---------- Reviews carousel: touch swipe support ----------
+  let touchStartX = 0;
+  let touchStartY = 0;
+  let touchDeltaX = 0;
+  let isSwiping = false;
+
+  reviewsTrack.addEventListener('touchstart', (e) => {
+    touchStartX = e.touches[0].clientX;
+    touchStartY = e.touches[0].clientY;
+    touchDeltaX = 0;
+    isSwiping = true;
+  }, { passive: true });
+
+  reviewsTrack.addEventListener('touchmove', (e) => {
+    if(!isSwiping) return;
+    touchDeltaX = e.touches[0].clientX - touchStartX;
+    const deltaY = e.touches[0].clientY - touchStartY;
+    if(Math.abs(touchDeltaX) > Math.abs(deltaY)){
+      e.preventDefault();
+    }
+  }, { passive: false });
+
+  reviewsTrack.addEventListener('touchend', () => {
+    if(!isSwiping) return;
+    isSwiping = false;
+    const threshold = 40;
+    const total = reviews.length;
+    if(touchDeltaX > threshold){
+      reviewIndex = (reviewIndex - 1 + total) % total;
+      renderReviews();
+    } else if(touchDeltaX < -threshold){
+      reviewIndex = (reviewIndex + 1) % total;
+      renderReviews();
+    }
+    touchDeltaX = 0;
+  });
+
   // ---------- Header depth + scroll progress + back-to-top ----------
   const header = document.querySelector('header');
   const scrollProgress = document.getElementById('scrollProgress');
