@@ -109,6 +109,32 @@
   }
   .phone-icon svg{width:19px; height:19px;}
   .phone-icon:hover{background:var(--moss-deep); color:var(--paper-soft);}
+
+  /* Site search */
+  .nav-search{position:relative;}
+  .nav-search .phone-icon{cursor:pointer;}
+  .search-panel{
+    position:absolute; top:calc(100% + 14px); right:0; width:300px; max-width:80vw;
+    background:var(--paper-soft); border:1px solid var(--line); border-radius:2px;
+    box-shadow:0 20px 44px rgba(34,53,42,0.18);
+    padding:14px; z-index:220;
+    opacity:0; visibility:hidden; transform:translateY(-8px);
+    transition:opacity .22s ease, transform .22s ease, visibility .22s ease;
+  }
+  .search-panel.open{opacity:1; visibility:visible; transform:translateY(0);}
+  .search-panel input{
+    width:100%; font-family:var(--font-body); font-size:0.9rem; color:var(--ink);
+    border:1px solid var(--stone); border-radius:2px; padding:10px 12px; background:var(--paper);
+    outline:none; transition:border-color .2s ease;
+  }
+  .search-panel input:focus{border-color:var(--gold);}
+  .search-results{max-height:280px; overflow-y:auto; margin-top:10px; display:flex; flex-direction:column; gap:2px;}
+  .search-result{
+    display:block; padding:10px 12px; border-radius:2px; font-size:0.9rem; color:var(--ink);
+  }
+  .search-result:hover{background:var(--stone); color:var(--moss-deep);}
+  .search-result small{display:block; color:var(--ink-soft); font-size:0.72rem; margin-top:2px; letter-spacing:0.04em; text-transform:uppercase;}
+  .search-empty{padding:10px 12px; color:var(--ink-soft); font-size:0.85rem;}
   .nav-links{display:flex; align-items:center; gap:34px;}
   .nav-links a{font-size:0.92rem; font-weight:500; color:var(--ink); position:relative; padding:4px 0;}
   .nav-links a::after{content:"";position:absolute; left:0; bottom:0; width:0; height:1.5px; background:var(--gold); transition:width .25s ease;}
@@ -443,6 +469,7 @@
   @media (max-width:920px){
     .nav-links{display:none;}
     .phone-icon.desktop-only{display:none;}
+    .search-panel{width:280px; max-width:88vw;}
     .activity-grid{grid-template-columns:repeat(2,1fr); gap:14px;}
     .menu-btn{display:block;}
     .grid-2{grid-template-columns:1fr; gap:36px;}
@@ -494,6 +521,18 @@
           <path d="M6.6 10.8c1.4 2.8 3.8 5.1 6.6 6.6l2.2-2.2c.3-.3.7-.4 1.1-.2 1.2.4 2.5.6 3.8.6.6 0 1 .4 1 1V20c0 .6-.4 1-1 1-9.4 0-17-7.6-17-17 0-.6.4-1 1-1h3.5c.6 0 1 .4 1 1 0 1.3.2 2.6.6 3.8.1.4 0 .8-.3 1.1L6.6 10.8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/>
         </svg>
       </a>
+      <div class="nav-search">
+        <button class="phone-icon" id="searchToggle" aria-label="Search the site" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.6"/>
+            <path d="m20 20-3.5-3.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/>
+          </svg>
+        </button>
+        <div class="search-panel" id="searchPanel">
+          <input type="text" id="searchInput" placeholder="Search rooms, activities, services…" autocomplete="off">
+          <div class="search-results" id="searchResults"></div>
+        </div>
+      </div>
       <button class="menu-btn" id="menuBtn" aria-label="Open menu" aria-expanded="false">
         <span></span><span></span>
       </button>
@@ -855,6 +894,70 @@
 <script>
   const menuBtn = document.getElementById('menuBtn');
   document.getElementById('year').textContent = new Date().getFullYear();
+
+  // ---------- Site search ----------
+  const searchData = [
+    { title: 'Welcome', section: 'Welcome', href: '#welcome', keywords: 'welcome mission compassionate person-centred care home about' },
+    { title: 'Bedrooms', section: 'Our Home', href: '#bedrooms', keywords: 'bedroom bedrooms private room sanctuary window bed nurse call wifi tv' },
+    { title: 'En-Suite Bathrooms', section: 'Our Home', href: '#bedrooms', keywords: 'en-suite ensuite bathroom shower grab bars accessible' },
+    { title: 'Garden', section: 'Our Home', href: '#garden', keywords: 'garden outdoor pathway wheelchair walkers oasis' },
+    { title: 'Bingo', section: 'Life Here', href: '#life-here', keywords: 'bingo activity game regular' },
+    { title: 'Quizzes', section: 'Life Here', href: '#life-here', keywords: 'quiz quizzes activity brain mind' },
+    { title: 'Knitting Club', section: 'Life Here', href: '#life-here', keywords: 'knitting club activity hobby craft' },
+    { title: 'Monthly Mass', section: 'Life Here', href: '#life-here', keywords: 'mass monthly religion spiritual church' },
+    { title: 'Live Music', section: 'Life Here', href: '#life-here', keywords: 'music live weekly performance' },
+    { title: 'Cards', section: 'Life Here', href: '#life-here', keywords: 'cards game activity' },
+    { title: 'Long-Term Residential Care', section: 'Life & Care', href: '#care', keywords: 'residential long-term long term care permanent' },
+    { title: 'Convalescence Care', section: 'Life & Care', href: '#care', keywords: 'convalescence recovery care hospital discharge' },
+    { title: 'Short-Stay Respite Care', section: 'Life & Care', href: '#care', keywords: 'respite short stay care break' },
+    { title: 'Physiotherapy', section: 'Life & Care', href: '#care', keywords: 'physio physiotherapy mobility balance strength' },
+    { title: 'Hairdressing', section: 'Life & Care', href: '#care', keywords: 'hairdressing hair salon haircut styling perm' },
+    { title: 'Chiropody', section: 'Life & Care', href: '#care', keywords: 'chiropody chiropodist feet foot care nails' },
+    { title: 'Nutritionist', section: 'Life & Care', href: '#care', keywords: 'nutritionist diet nutrition meal' },
+    { title: 'Optician', section: 'Life & Care', href: '#care', keywords: 'optician eye sight glasses vision' },
+    { title: 'Visit Us', section: 'Contact', href: '#visit', keywords: 'visit contact phone email address directions parking' },
+  ];
+
+  const navSearch = document.querySelector('.nav-search');
+  const searchToggle = document.getElementById('searchToggle');
+  const searchPanel = document.getElementById('searchPanel');
+  const searchInput = document.getElementById('searchInput');
+  const searchResults = document.getElementById('searchResults');
+
+  function renderResults(query){
+    const q = query.trim().toLowerCase();
+    const matches = q === ''
+      ? searchData
+      : searchData.filter(item => (item.title + ' ' + item.keywords).toLowerCase().includes(q));
+    if(matches.length === 0){
+      searchResults.innerHTML = '<div class="search-empty">No matches found.</div>';
+      return;
+    }
+    searchResults.innerHTML = matches.map(item =>
+      `<a href="${item.href}" class="search-result">${item.title}<small>${item.section}</small></a>`
+    ).join('');
+    searchResults.querySelectorAll('a').forEach(a => a.addEventListener('click', closeSearch));
+  }
+  function openSearch(){
+    searchPanel.classList.add('open');
+    searchToggle.setAttribute('aria-expanded', 'true');
+    renderResults('');
+    setTimeout(() => searchInput.focus(), 60);
+  }
+  function closeSearch(){
+    searchPanel.classList.remove('open');
+    searchToggle.setAttribute('aria-expanded', 'false');
+    searchInput.value = '';
+  }
+  searchToggle.addEventListener('click', (e) => {
+    e.stopPropagation();
+    searchPanel.classList.contains('open') ? closeSearch() : openSearch();
+  });
+  searchPanel.addEventListener('click', (e) => e.stopPropagation());
+  searchInput.addEventListener('input', () => renderResults(searchInput.value));
+  document.addEventListener('click', (e) => { if(!navSearch.contains(e.target)) closeSearch(); });
+  document.addEventListener('keydown', (e) => { if(e.key === 'Escape') closeSearch(); });
+
 
   const mobilePanel = document.getElementById('mobilePanel');
   const pageContent = document.getElementById('page-content');
