@@ -258,6 +258,36 @@
   .tag-strip .stat strong{display:block; font-family:var(--font-display); font-size:2rem; color:var(--gold-soft);}
   .tag-strip .stat span{font-size:0.85rem; color:rgba(250,248,241,0.78);}
 
+  /* ---------- REVIEWS CAROUSEL ---------- */
+  .reviews-carousel{margin-top:40px; display:flex; flex-direction:column; align-items:center; gap:30px;}
+  .reviews-track{display:flex; align-items:stretch; justify-content:center; gap:22px; width:100%;}
+  .review-card{
+    background:var(--paper); border:1px solid var(--line); border-radius:2px;
+    padding:30px 26px; width:340px; flex-shrink:0; cursor:pointer;
+    transition:transform .4s cubic-bezier(.16,.8,.24,1), opacity .4s ease, box-shadow .4s ease, background .4s ease;
+    opacity:0.55; transform:scale(0.92);
+  }
+  .review-card.center{
+    background:var(--paper-soft); border-color:var(--gold); opacity:1; transform:scale(1);
+    box-shadow:0 22px 44px rgba(34,53,42,0.14);
+  }
+  .review-card .stars{color:var(--gold); letter-spacing:2px; margin-bottom:14px; font-size:0.95rem;}
+  .review-card .stars .empty{color:var(--stone);}
+  .review-card p.quote{font-style:italic; color:var(--ink-soft); font-size:0.95rem; margin-bottom:18px;}
+  .review-card .reviewer{font-family:var(--font-display); color:var(--moss-deep); font-weight:600; font-size:1.02rem;}
+  .review-card .meta{font-size:0.8rem; color:var(--ink-soft); margin-top:2px;}
+  .review-card .badge-new{
+    display:inline-block; margin-left:8px; font-size:0.65rem; letter-spacing:0.08em; text-transform:uppercase;
+    color:var(--gold); font-weight:700; border:1px solid var(--gold); padding:2px 6px; border-radius:20px;
+  }
+  .reviews-dots{display:flex; gap:8px;}
+  .reviews-dot{width:8px; height:8px; border-radius:50%; background:var(--stone); border:none; cursor:pointer; transition:background .2s ease, transform .2s ease;}
+  .reviews-dot.active{background:var(--gold); transform:scale(1.3);}
+
+  @media (max-width:920px){
+    .review-card{width:78vw;}
+    .review-card:not(.center){display:none;}
+  }
 
   .two-col-cards{display:grid; grid-template-columns:repeat(3,1fr); gap:26px;}
   .card{
@@ -570,6 +600,17 @@
       <div class="hero-actions">
         <a href="tel:+353613822866" class="btn gold">Call 061 382 286</a>
         <a href="#visit" class="btn ghost">Plan a visit</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="reviews" style="background:var(--paper-soft);">
+    <div class="wrap">
+      <span class="eyebrow">What People Say</span>
+      <h2 class="reveal">Loved by families across Bruff</h2>
+      <div class="reviews-carousel">
+        <div class="reviews-track" id="reviewsTrack"></div>
+        <div class="reviews-dots" id="reviewsDots"></div>
       </div>
     </div>
   </section>
@@ -1053,6 +1094,90 @@
     if(e.key === 'ArrowLeft') showImage(currentIndex - 1);
     if(e.key === 'ArrowRight') showImage(currentIndex + 1);
   });
+
+  // ---------- Google Reviews carousel ----------
+  const GOOGLE_REVIEWS_URL = "https://www.google.com/maps/place/Ard+Na+R%C3%AD+Nursing+Home/@52.5003193,-8.5421053,172m/data=!3m1!1e3!4m8!3m7!1s0x485b53e24124e6b9:0xcdb41797cb2d55f0!8m2!3d52.5006136!4d-8.5419449!9m1!1b1!16s%2Fg%2F11bbrnnhfj?hl=en-US&entry=ttu&g_ep=EgoyMDI2MDcyMi4wIKXMDSoASAFQAw%3D%3D";
+
+  const reviews = [
+    {
+      name: "Mark Murphy",
+      meta: "Local Guide · 257 reviews · 12 photos",
+      time: "5 years ago",
+      stars: 5,
+      quote: "Staff so caring, home so clean."
+    },
+    {
+      name: "Anne O'Donnell",
+      meta: "Local Guide · 47 reviews",
+      time: "4 years ago",
+      stars: 5,
+      quote: "We called in this afternoon to see the Aunt and found it was a family day with live music and a bbq. It was very hot with strong sun. All the staff were fantastic, dishing out sunhats, applying cream, moving the residents to under a big parasol. The food was great, loads of it, for residents and visitors, with plenty of cold drinks. We felt very welcome."
+    },
+    {
+      name: "Michał Kozakiewicz",
+      meta: "Local Guide · 39 reviews · 702 photos",
+      time: "3 months ago",
+      stars: 5,
+      quote: ""
+    },
+    {
+      name: "Magaret Ita Coleman",
+      meta: "Local Guide · 129 reviews · 40 photos",
+      time: "2 weeks ago",
+      isNew: true,
+      stars: 5,
+      quote: "Lovely and quiet and peaceful, lovely staff."
+    }
+  ];
+
+  function renderStars(n){
+    let out = '';
+    for(let i = 1; i <= 5; i++){
+      out += i <= n ? '★' : '<span class="empty">☆</span>';
+    }
+    return out;
+  }
+
+  let reviewIndex = 0;
+  const reviewsTrack = document.getElementById('reviewsTrack');
+  const reviewsDots = document.getElementById('reviewsDots');
+
+  function renderReviews(){
+    reviewsTrack.innerHTML = '';
+    const total = reviews.length;
+    const order = [(reviewIndex - 1 + total) % total, reviewIndex, (reviewIndex + 1) % total];
+
+    order.forEach((idx, pos) => {
+      const r = reviews[idx];
+      const card = document.createElement('div');
+      card.className = 'review-card' + (pos === 1 ? ' center' : '');
+      card.innerHTML = `
+        <div class="stars">${renderStars(r.stars)}</div>
+        <p class="quote">"${r.quote || 'Shared photos from their visit.'}"</p>
+        <div class="reviewer">${r.name}</div>
+        <div class="meta">${r.meta}${r.isNew ? '<span class="badge-new">New</span>' : ''} · ${r.time}</div>
+      `;
+      card.addEventListener('click', () => {
+        if(pos === 0){ reviewIndex = (reviewIndex - 1 + total) % total; renderReviews(); }
+        else if(pos === 2){ reviewIndex = (reviewIndex + 1) % total; renderReviews(); }
+        else { window.open(GOOGLE_REVIEWS_URL, '_blank', 'noopener'); }
+      });
+      reviewsTrack.appendChild(card);
+    });
+
+    renderDots();
+  }
+
+  function renderDots(){
+    reviewsDots.innerHTML = reviews.map((_, i) =>
+      `<button class="reviews-dot${i === reviewIndex ? ' active' : ''}" data-i="${i}" aria-label="Show review ${i + 1}"></button>`
+    ).join('');
+    reviewsDots.querySelectorAll('.reviews-dot').forEach(dot => {
+      dot.addEventListener('click', () => { reviewIndex = parseInt(dot.dataset.i, 10); renderReviews(); });
+    });
+  }
+
+  renderReviews();
 
   // ---------- Header depth + scroll progress + back-to-top ----------
   const header = document.querySelector('header');
